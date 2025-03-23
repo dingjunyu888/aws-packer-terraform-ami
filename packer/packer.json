@@ -1,0 +1,49 @@
+{
+    "builders": [
+        {
+            "type": "amazon-ebs",
+            "region": "us-east-1",
+            "source_ami_filter": {
+                "filters": {
+                    "name": "amzn2-ami-hvm-*-x86_64-gp2",
+                    "virtualization-type": "hvm",
+                    "root-device-type": "ebs"
+                },
+                "owners": [
+                    "137112412989"
+                ],
+                "most_recent": true
+            },
+            "instance_type": "t2.micro",
+            "ssh_username": "ec2-user",
+            "ami_name": "custom-amazon-linux-ami-{{timestamp}}",
+            "ami_description": "Amazon Linux 2 with Docker and SSH key access",
+            "associate_public_ip_address": true
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "sudo yum update -y",
+                "sudo amazon-linux-extras install docker -y",
+                "sudo service docker start",
+                "sudo usermod -aG docker ec2-user"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "/Users/junyuding/.ssh/id_rsa.pub",
+            "destination": "/tmp/authorized_keys"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "mkdir -p ~/.ssh",
+                "cat /tmp/authorized_keys >> ~/.ssh/authorized_keys",
+                "chmod 600 ~/.ssh/authorized_keys",
+                "chmod 700 ~/.ssh"
+            ]
+        }
+    ]
+}
