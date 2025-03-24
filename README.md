@@ -68,7 +68,7 @@ Terraform was used to deploy the following resources:
 
 ---
 
-## 📸 Screenshots (Add yours here)
+## 📸 Screenshots
 ## VPC Setup Screenshot
 
 ![VPC Diagram](./screenshots/1.png)
