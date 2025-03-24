@@ -104,10 +104,11 @@ This project creates a custom Amazon Linux AMI with Docker and provisions:
 ```bash
 aws configure
 ```
+
 Or manually edit your credentials file:
 
-```ini
-# ~/.aws/credentials
+**~/.aws/credentials**
+```
 [default]
 aws_access_key_id     = <YOUR_AWS_ACCESS_KEY_ID>
 aws_secret_access_key = <YOUR_AWS_SECRET_ACCESS_KEY>
@@ -115,13 +116,15 @@ aws_session_token     = <YOUR_AWS_SESSION_TOKEN>
 ```
 
 Set your region:
-```ini
-# ~/.aws/config
+
+**~/.aws/config**
+```
 [default]
 region = us-east-1
 ```
 
 ✅ Verify credentials:
+
 ```bash
 aws sts get-caller-identity
 ```
@@ -129,14 +132,17 @@ aws sts get-caller-identity
 ---
 
 ## 2. 🔑 Generate SSH Key and Import to AWS
+
 This key allows Packer and Terraform to connect to EC2 instances.
 
-### a. Generate SSH Key (if not already created)
+a. Generate SSH Key (if not already created):
+
 ```bash
 ssh-keygen -t rsa -b 2048 -f ~/.ssh/spa -N ""
 ```
 
-### b. Import Public Key to AWS
+b. Import Public Key to AWS:
+
 ```bash
 aws ec2 import-key-pair \
   --key-name "spa" \
@@ -147,10 +153,34 @@ aws ec2 import-key-pair \
 
 ## 3. 📦 Build the AMI with Packer
 
+⚠️ **Fix SSH Key Path First (Important!)**
+
+Before running packer build, ensure the SSH key path in `packer.json` is valid.
+
+If your `packer.json` contains:
+
+```json
+"source": "~/.ssh/id_rsa.pub",
+```
+
+Replace it with your full absolute path:
+
+```json
+"source": "/Users/junyuding/.ssh/id_rsa.pub",
+```
+
+Or run this one-liner:
+
+```bash
+sed -i '' 's|~/.ssh/id_rsa.pub|/Users/junyuding/.ssh/id_rsa.pub|' packer.json
+```
+
+Then run:
+
 ```bash
 cd packer-ami
-packer init .
-packer build .
+packer validate packer.json
+packer build packer.json
 ```
 
 ✅ After build, copy the generated AMI ID (e.g., `ami-0a443a001ef93bfa9`)
@@ -160,12 +190,14 @@ packer build .
 ## 4. 📁 Update Terraform Variables
 
 Edit `terraform.tfvars`:
+
 ```hcl
-ami_id = "ami-0a443a001ef93bfa9"     # Your generated AMI ID
-my_ip  = "X.X.X.X/32"                 # Your public IP address
+ami_id = "ami-0a443a001ef93bfa9"
+my_ip  = "X.X.X.X/32"
 ```
 
-✅ You can find your IP address from:
+✅ Find your IP:
+
 ```bash
 curl ifconfig.me
 ```
@@ -175,7 +207,7 @@ curl ifconfig.me
 ## 5. 🚀 Deploy Infrastructure with Terraform
 
 ```bash
-cd terraform  # From project root
+cd terraform
 terraform init
 terraform apply
 ```
@@ -183,12 +215,12 @@ terraform apply
 Approve the plan with `yes`.
 
 ✅ Terraform will output:
+
 ```
 bastion_public_ip = "54.xxx.xxx.xxx"
 private_instance_ids = [
   "i-xxxxxxxxxxxxxxxxx",
-  "i-xxxxxxxxxxxxxxxxx",
-  ... (6 total)
+  ...
 ]
 ```
 
@@ -201,12 +233,13 @@ ssh -i ~/.ssh/spa ec2-user@<bastion_public_ip>
 ```
 
 ✅ Once logged into the bastion:
+
 ```bash
-chmod 400 spa.pem  # if spa.pem is uploaded via scp or echo
+chmod 400 spa.pem
 ```
 
-### (Optional) Transfer Key to Bastion Host
-If the `spa.pem` is not already on the bastion, you can copy it from your local machine:
+(Optional) Transfer Key:
+
 ```bash
 scp -i ~/.ssh/spa ~/.ssh/spa ec2-user@<bastion_public_ip>:~/spa.pem
 ```
@@ -214,21 +247,20 @@ scp -i ~/.ssh/spa ~/.ssh/spa ec2-user@<bastion_public_ip>:~/spa.pem
 ---
 
 ## 7. 💻 Access Private EC2 Instances
+
 From the Bastion:
+
 ```bash
-ssh -i spa.pem ec2-user@10.0.x.x  # Replace with actual private IP
+ssh -i spa.pem ec2-user@10.0.x.x
 ```
 
 ✅ Once inside:
-```bash
-cat /etc/os-release     # → Amazon Linux 2
-sudo service docker start
-docker --version        # → Docker installed
-```
 
-Check network:
 ```bash
-ping 10.0.x.x           # Ping other private EC2s
+cat /etc/os-release
+sudo service docker start
+docker --version
+ping 10.0.x.x
 ```
 
 ---
