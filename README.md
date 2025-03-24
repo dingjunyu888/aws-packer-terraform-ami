@@ -189,7 +189,7 @@ packer build packer.json
 
 ## 4. 📁 Update Terraform Variables
 
-Edit `terraform.tfvars`:
+Edit `variables.tf` in terraform root folder:
 
 ```hcl
 ami_id = "ami-0a443a001ef93bfa9"
