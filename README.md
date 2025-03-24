@@ -269,11 +269,11 @@ ping 10.0.x.x
 
 ```
 project-root/
-├── packer-ami/
-│   └── ami.pkr.hcl
+├── packer/
+│   └── packer.json
 ├── terraform/
 │   ├── main.tf
-│   ├── terraform.tfvars
+│   ├── variables.tf
 │   └── modules/
 │       ├── vpc/
 │       └── security/
