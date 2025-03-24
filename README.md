@@ -178,7 +178,7 @@ sed -i '' 's|~/.ssh/id_rsa.pub|/Users/junyuding/.ssh/id_rsa.pub|' packer.json
 Then run:
 
 ```bash
-cd packer-ami
+cd packer
 packer validate packer.json
 packer build packer.json
 ```
