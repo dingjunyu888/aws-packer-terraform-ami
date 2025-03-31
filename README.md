@@ -413,24 +413,40 @@ Paste the following playbook:
         state: latest
       when: ansible_os_family == "RedHat"
 
-    - name: Install Docker
-      package:
-        name: docker
-        state: latest
+    - name: Install Docker on Ubuntu
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
 
-    - name: Ensure Docker is running
+    - name: Install Docker on Amazon Linux
+      yum:
+        name: docker
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure Docker is running on Ubuntu
       service:
         name: docker
         state: started
         enabled: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure Docker is running on Amazon Linux
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
 
     - name: Check disk usage
       command: df -h
-      register: disk_output
+      register: disk_usage
 
-    - name: Print disk usage
+    - name: Show disk usage output
       debug:
-        var: disk_output.stdout_lines
+        var: disk_usage.stdout_lines
 ```
 
 ---
