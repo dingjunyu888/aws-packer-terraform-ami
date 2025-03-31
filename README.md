@@ -453,12 +453,25 @@ ansible-playbook -i inventory.ini playbook.yml | tee run.log
 
 ---
 
-## ✅ What to Expect
+## ✅ Disk Usage Output (Sample)
 
-If everything is configured correctly, you will see:
+```text
+ok: [10.0.101.236] => {
+    "disk_usage.stdout_lines": [
+        "/dev/root       7.6G  2.8G  4.9G  37% /",
+        "tmpfs           475M     0  475M   0% /dev/shm",
+        "tmpfs           190M  892K  190M   1% /run",
+        "/dev/xvda15     105M  6.1M   99M   6% /boot/efi"
+    ]
+}
+ok: [10.0.102.82] => {
+    "disk_usage.stdout_lines": [
+        "/dev/xvda1      8.0G  2.1G  6.0G  26% /",
+        "tmpfs           486M     0  486M   0% /sys/fs/cgroup"
+    ]
+}
+```
 
-- Packages updated
-- Docker installed and running
-- Disk usage printed per host
+---
 
 You can review the results in `run.log`.

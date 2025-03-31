@@ -4,28 +4,44 @@
   become: yes
   tasks:
 
-    - name: Update and upgrade apt packages (Ubuntu)
+    - name: Update & upgrade apt packages (Ubuntu)
       apt:
         update_cache: yes
         upgrade: dist
       when: ansible_os_family == "Debian"
 
-    - name: Update and upgrade yum packages (Amazon Linux)
+    - name: Update & upgrade yum packages (Amazon Linux)
       yum:
         name: "*"
         state: latest
       when: ansible_os_family == "RedHat"
 
-    - name: Install latest Docker if not installed
-      package:
-        name: docker
-        state: latest
+    - name: Install Docker on Ubuntu
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
 
-    - name: Ensure Docker service is running
+    - name: Install Docker on Amazon Linux
+      yum:
+        name: docker
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure Docker is running on Ubuntu
       service:
         name: docker
         state: started
         enabled: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure Docker is running on Amazon Linux
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
 
     - name: Check disk usage
       command: df -h
