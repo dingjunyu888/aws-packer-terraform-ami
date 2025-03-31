@@ -288,3 +288,177 @@ project-root/
 - [x] Bastion Host in Public Subnet
 - [x] 6 Private EC2 Instances deployed using AMI
 - [x] SSH access configured and validated
+
+
+# 🧩 Assignment 10 – Provision EC2s and Configure with Ansible
+
+In this assignment, we extend the infrastructure to:
+
+- Provision 6 EC2 instances: 3 Ubuntu + 3 Amazon Linux (private subnet)
+- Provision 1 Ansible Controller (public subnet)
+- Use Ansible to configure the 6 private EC2s:
+  - Update/upgrade packages
+  - Ensure Docker is installed and running
+  - Report disk usage
+
+---
+
+## ✅ Step 1: Run Terraform
+
+Navigate to your terraform directory and apply the configuration:
+
+```bash
+cd terraform
+terraform apply
+```
+
+After applying, Terraform will output something like:
+
+```hcl
+amazon_private_ips = [
+  "10.0.101.206",
+  "10.0.102.82",
+  "10.0.101.44",
+]
+ubuntu_private_ips = [
+  "10.0.101.236",
+  "10.0.102.224",
+  "10.0.101.36",
+]
+ansible_controller_public_ip = "54.196.127.249"
+bastion_public_ip = "98.81.189.8"
+```
+
+---
+
+## ✅ Step 2: Prepare Ansible Inventory
+
+Create or update the `ansible/inventory.ini` file with the private IPs:
+
+```ini
+[ubuntu]
+10.0.101.236
+10.0.102.224
+10.0.101.36
+
+[amazon]
+10.0.101.206
+10.0.102.82
+10.0.101.44
+
+[ubuntu:vars]
+ansible_user=ubuntu
+
+[amazon:vars]
+ansible_user=ec2-user
+
+[all:vars]
+ansible_ssh_private_key_file=~/.ssh/spa.pem
+```
+
+---
+
+## ✅ Step 3: SSH into the Ansible Controller
+
+From your local machine, connect using the Ansible Controller's public IP:
+
+```bash
+ssh -i ~/.ssh/spa.pem ubuntu@54.196.127.249
+```
+
+Once logged in:
+
+```bash
+sudo apt update
+sudo apt install ansible -y
+```
+
+---
+
+## ✅ Step 4: Set Up the Ansible Project on the Controller
+
+Inside the Ansible controller:
+
+```bash
+mkdir -p ~/ansible && cd ~/ansible
+nano inventory.ini
+```
+
+Paste in the exact contents from Step 2.
+
+Then create the playbook:
+
+```bash
+nano playbook.yml
+```
+
+Paste the following playbook:
+
+```yaml
+---
+- name: Assignment 10 Playbook
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Update & upgrade apt packages (Ubuntu)
+      apt:
+        update_cache: yes
+        upgrade: dist
+      when: ansible_os_family == "Debian"
+
+    - name: Update & upgrade yum packages (Amazon Linux)
+      yum:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Docker
+      package:
+        name: docker
+        state: latest
+
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Check disk usage
+      command: df -h
+      register: disk_output
+
+    - name: Print disk usage
+      debug:
+        var: disk_output.stdout_lines
+```
+
+---
+
+## ✅ Step 5: Upload the SSH Key and Run the Playbook
+
+From your local machine, copy your key file to the controller:
+
+```bash
+scp -i ~/.ssh/spa.pem ~/.ssh/spa.pem ubuntu@54.196.127.249:/home/ubuntu/.ssh/spa.pem
+```
+
+Then, on the controller:
+
+```bash
+chmod 400 ~/.ssh/spa.pem
+cd ~/ansible
+ansible-playbook -i inventory.ini playbook.yml | tee run.log
+```
+
+---
+
+## ✅ What to Expect
+
+If everything is configured correctly, you will see:
+
+- Packages updated
+- Docker installed and running
+- Disk usage printed per host
+
+You can review the results in `run.log`.

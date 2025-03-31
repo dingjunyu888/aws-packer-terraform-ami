@@ -1,0 +1,36 @@
+---
+- name: Assignment 10 Playbook
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Update and upgrade apt packages (Ubuntu)
+      apt:
+        update_cache: yes
+        upgrade: dist
+      when: ansible_os_family == "Debian"
+
+    - name: Update and upgrade yum packages (Amazon Linux)
+      yum:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Install latest Docker if not installed
+      package:
+        name: docker
+        state: latest
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Check disk usage
+      command: df -h
+      register: disk_usage
+
+    - name: Show disk usage output
+      debug:
+        var: disk_usage.stdout_lines
